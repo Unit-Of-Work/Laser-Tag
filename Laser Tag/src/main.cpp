@@ -13,14 +13,16 @@ int laser = 10; //de emitter zit nu op pin 3 - voor testen is de laser een led m
 int ontvanger = 7; 
 int safety = 6; // Can be changed idk just a random pin I chose
 int firemode = 5; // If pressed then semi, else auto
+int reload = 4;
 
 // Vars
 int full = 0;
 int safe = 0;
 int semi = 0;
+int r = 0;
 int offtime = 5000;
 int d = 0;
-int shotDelay = 92; // Delay between shot with full-auto
+int shotDelay = 40; // Delay between shot with full-auto
 int clipSize = 30;
 int shots = 0;
 
@@ -28,6 +30,7 @@ int shots = 0;
 unsigned long timee = 0;
 unsigned long dupeTime = 0;
 unsigned long e = 0;
+unsigned long autoReload = 0;
 
 // Bool(eans) for true false that help with on off and stuff
 bool autoM = true; // If we add a switch later to choose between auto and semi
@@ -48,10 +51,10 @@ void setup() {
   pinMode(12, INPUT); //trekker2
   pinMode(6, OUTPUT); //Safety button
   pinMode(5, OUTPUT); //Semi
+  pinMode(4, INPUT); //Reload
 }
 
 void loop() {
-  Serial.println(onof);
  if (irrecv.decode(&results)) { //if we have received an IR signal
   if (results.value==0x26BB33CE) { 
       results.value=Previous;
@@ -69,19 +72,22 @@ void loop() {
   full = digitalRead(trekker);
   safe = digitalRead(safety);
   semi = digitalRead(firemode);
+  r = digitalRead(reload);
   digitalWrite(laser, LOW);
   if (full == HIGH){ // If trigger pulled
     if (safe == LOW){
       if (onof == false){
         if (preventDupe == false){
-          if (shots < clipSize + 1){
+          if (shots < clipSize){
             digitalWrite(laser, HIGH); // The laser visual indicator
             Serial.println("BoomStick");
             irsend.sendNEC(0xFFA25D, 24);
             irrecv.enableIRIn();
             shots++;
+            if (shots == clipSize){
+              autoReload = millis();
+            }
           }
-          
         }
     }
       } else {
@@ -91,7 +97,11 @@ void loop() {
       }
   
   }
-
+  if (shots == clipSize){
+    if (millis() - autoReload > offtime){
+      shots = 0;
+    }
+  }
   if (autoM == true){
     if (full == HIGH){
       if (preventDupe == false){
@@ -112,14 +122,12 @@ void loop() {
             if (full == LOW){
               preventDupe = false;
             }
-              
             }
       }
-    
   if (onof == true){
     d = millis() - timee;
       if (d > offtime){
           onof = false;
-        }
+      }
   }
 }
