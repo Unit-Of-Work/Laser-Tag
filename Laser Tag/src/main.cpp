@@ -28,7 +28,7 @@ unsigned long dupeTime = 0;
 unsigned long e = 0;
 
 // Bool(eans) for true false that help with on off and stuff
-bool autoM = false; // If we add a switch later to choose between auto and semi
+bool autoM = false; // If we add a switch later to choose between auto and semi, If false then semi
 bool onof = false;
 bool preventDupe = false;
 
@@ -47,6 +47,46 @@ void setup() {
   pinMode(6, OUTPUT); //Safety button
   pinMode(5, OUTPUT); //Semi
   Serial.println(autoM);
+}
+
+void shoot(void){ // Call this when shoot
+  digitalWrite(laser, HIGH); // The laser visual indicator
+  irsend.sendNEC(0xFFA25D, 24);
+  irrecv.enableIRIn(); 
+}
+
+void delayBetween(void){ // Ignore yellow line under delayBetween :]
+  if (onof == true){
+    d = millis() - timee;
+      if (d > offtime){
+          onof = false;
+        }
+  }
+}
+
+void fireSelector(void){
+  full = digitalRead(trekker);
+  if (autoM == true){ // If auto enabled do this
+    if (full == HIGH){ // This part till
+      if (preventDupe == false){
+        dupeTime = millis();
+        preventDupe = true;
+      }}
+      if (preventDupe == true){
+        e = millis() - dupeTime; // Ignore yellow line
+        if (e > shotDelay){
+          preventDupe = false;
+        }
+      } // Here is for full auto
+  } else { // If Semi is enabled do this
+    if (autoM == false){
+      if (preventDupe == true){
+        if (full == LOW){ // Checks whether trigger is NOT pulled
+          preventDupe = false; // If so then set preventDupe to false so it can shoot again
+        }
+      }
+    }
+  }
 }
 
 void loop() {
@@ -69,14 +109,12 @@ void loop() {
   semi = digitalRead(firemode);
   digitalWrite(laser, LOW);
   if (full == HIGH) { // If trigger pulled
-    if (safe == LOW){
-      if (onof == false){
-        if (preventDupe == false){
-          digitalWrite(laser, HIGH); // The laser visual indicator
-          irsend.sendNEC(0xFFA25D, 24);
-          irrecv.enableIRIn(); 
-          if (autoM == false){
-              preventDupe = true;
+    if (safe == LOW){ // Checks if safety is off
+      if (onof == false){ // Checks if weapons isn't down/hit
+        if (preventDupe == false){ // Checks if the weapon is allowed to fire
+          shoot(); // Then shoot
+          if (autoM == false){ // If semi is enabled
+              preventDupe = true; // Set to true
             }
         }
     }
@@ -85,35 +123,7 @@ void loop() {
           Serial.println("your down");
         }
       }
-  
-  } else {
-      if (preventDupe == true){
-        preventDupe = false;
-        digitalWrite(laser, LOW);
-      }
-    }
-  //
-  if (autoM == true){
-    if (full == HIGH){ // This part till
-      if (preventDupe == false){
-        dupeTime = millis();
-        preventDupe = true;
-      }}
-      if (preventDupe == true){
-        e = millis() - dupeTime;
-        if (e > shotDelay){
-          preventDupe = false;
-        }
-      } // Here is for full auto
   }
-      
-  
-  //
-    
-  if (onof == true){
-    d = millis() - timee;
-      if (d > offtime){
-          onof = false;
-        }
-  }
+  fireSelector(); // Goes to fireSelector function, does something when its semi or auto
+  delayBetween(); // This is for the downtime if the weapon got hit, (Sets onof var)
 }
