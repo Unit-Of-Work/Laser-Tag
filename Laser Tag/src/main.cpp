@@ -16,7 +16,7 @@ int firemode = 5; // If pressed then semi, else auto
 
 // Vars
 int full = 0;
-int safe = 0;
+int safe = 0; 
 int semi = 0;
 int offtime = 5000;
 int d = 0;
