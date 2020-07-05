@@ -21,6 +21,8 @@ int semi = 0;
 int offtime = 5000;
 int d = 0;
 int shotDelay = 92; // Delay between shot with full-auto
+int clipSize = 30;
+int shots = 0;
 
 // ulong = giant number to count 
 unsigned long timee = 0;
@@ -72,10 +74,14 @@ void loop() {
     if (safe == LOW){
       if (onof == false){
         if (preventDupe == false){
-          digitalWrite(laser, HIGH); // The laser visual indicator
-          Serial.println("BoomStick");
-          irsend.sendNEC(0xFFA25D, 24);
-          irrecv.enableIRIn();
+          if (shots < clipSize + 1){
+            digitalWrite(laser, HIGH); // The laser visual indicator
+            Serial.println("BoomStick");
+            irsend.sendNEC(0xFFA25D, 24);
+            irrecv.enableIRIn();
+            shots++;
+          }
+          
         }
     }
       } else {
@@ -86,7 +92,7 @@ void loop() {
   
   }
 
-  if (autoM == false){
+  if (autoM == true){
     if (full == HIGH){
       if (preventDupe == false){
         dupeTime = millis();
